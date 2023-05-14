@@ -71,6 +71,7 @@ def exclude_character():
     available_characters = [
       char for char in characters if char not in excluded
     ]
+    available_characters = sorted(available_characters, key=str.lower)
     if len(available_characters) == 3:
       print(
         "No more characters can be excluded. Please clear some characters from the excluded list first."
@@ -108,7 +109,7 @@ def exclude_character():
 
 def clear_exclusions():
   team = "survivor" if character_selector.last_selected_team else "killer"
-  excluded_characters = character_selector.excluded_characters[team]
+  excluded_characters = sorted(character_selector.excluded_characters[team], key=str.lower)
 
   while True:
     if not excluded_characters:
