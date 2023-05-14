@@ -1,4 +1,5 @@
 import sys
+from enum import Enum
 from selector import CharacterSelector
 from config import initialize_config
 
@@ -44,7 +45,7 @@ def switch_mode():
   )
 
 
-def exit_program(user_choice):
+def exit_program():
   confirmation = input('Are you sure you want to DC? ')
   if confirmation.lower() in yes():
     print('\nSee you in the fog...')
@@ -53,8 +54,9 @@ def exit_program(user_choice):
     print('GGEZ\n')
 
 
-def display_available_characters(team, available_characters, description):
+def display_characters(team, available_characters, description):
   """Displays the available characters for exclusion or clearing."""
+  available_characters = sorted(available_characters, key=str.lower)
   print(f"\nCurrent {description} {team} characters:")
   for i, char in enumerate(available_characters, start=1):
     print(f"{i}. {char}")
@@ -75,7 +77,7 @@ def exclude_character():
       )
       break
 
-    display_available_characters(team, available_characters, 'included')
+    display_characters(team, available_characters, 'included')
 
     try:
       exclusion_index = input(
@@ -95,8 +97,7 @@ def exclude_character():
             character_selector.excluded_characters[team].append(exclusion)
             print(f"{exclusion} was successfully removed from {team}s.\n")
           else:
-            print("Exclusion canceled.\n")
-            break
+            continue
         else:
           print(
             "Invalid number selection. Please enter a number that corresponds to one of the listed characters."
@@ -114,7 +115,7 @@ def clear_exclusions():
       print(f"No {team} characters are currently excluded.\n")
       break
     else:
-      display_available_characters(team, excluded_characters, 'excluded')
+      display_characters(team, excluded_characters, 'excluded')
     clear_choice = input(
       "\nEnter the number of the character to clear from this list.\n"
       "Enter 'all' to remove all characters from this list.\n"
@@ -131,8 +132,7 @@ def clear_exclusions():
           character_selector.excluded_characters[team].remove(character)
           print(f"{character} has been cleared from the {team} excluded list.")
         else:
-          print("Clear exclusion operation canceled.")
-          break
+          continue
       else:
         print(
           "Invalid number selection. Please enter a number that corresponds to one of the listed characters."
@@ -158,41 +158,58 @@ def clear_exclusions():
 def determine_input(choice):
   choice = choice.lower()
   if choice in ['0', '1', '']:
-    return 'pick_character'
+    return Action.PICK_CHARACTER
   elif choice in ['m', 'mode']:
-    return 'switch_mode'
+    return Action.SWITCH_MODE
   elif choice in ['e', 'exit', 'quit', 'dc']:
-    return 'exit'
+    return Action.EXIT
   elif choice in ['exclude', 'remove']:
-    return 'exclude'
+    return Action.EXCLUDE
   elif choice == 'clear':
-    return 'clear'
+    return Action.CLEAR
+  elif choice == 'menu':
+    return Action.MENU
   else:
-    return 'invalid'
+    return None
 
 
-action_map = {
-  'pick_character': pick_character,
-  'switch_mode': switch_mode,
-  'exit': exit_program,
-  'exclude': exclude_character,
-  'clear': clear_exclusions
-}
+class Action(Enum):
+    PICK_CHARACTER = ('pick_character', pick_character)
+    SWITCH_MODE = ('switch_mode', switch_mode)
+    EXIT = ('exit', exit_program)
+    EXCLUDE = ('exclude', exclude_character)
+    CLEAR = ('clear', clear_exclusions)
+    MENU = ('menu', print_menu)
+
+    def __init__(self, action_name, action_function):
+        self.action_name = action_name
+        self.action_function = action_function
+
+    @staticmethod
+    def from_input(choice):
+        choice = choice.lower()
+        for action in Action:
+            if choice == action.action_name:
+                return action
+        return None
+
+    def execute(self):
+        self.action_function()
 
 
 def get_user_choice():
-  while True:
-    current_team = "Survivor" if character_selector.last_selected_team else "Killer"
-    choice = input(f"Current team is {current_team}. Make your choice: ")
-    action = determine_input(choice)
+    while True:
+        current_team = "Survivor" if character_selector.last_selected_team else "Killer"
+        choice = input(f"Current team is {current_team}. Make your choice: ")
+        action = determine_input(choice)
 
-    if action == 'pick_character':
-      action_map[action](choice)
-    elif action in action_map:
-      action_map[action]()
-    else:
-      print("\nYou made an invalid selection. Try again.\n")
-      print_menu()
+        if action == Action.PICK_CHARACTER:
+            pick_character(choice)
+        elif action is not None:
+            action.execute()
+        else:
+            print("\nYou made an invalid selection. Try again.\n")
+            print_menu()
 
 
 def main():

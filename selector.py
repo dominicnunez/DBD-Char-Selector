@@ -1,6 +1,5 @@
 import random
 
-
 # The CharacterSelector class handles character selection based on user input and settings from a configuration file.
 class CharacterSelector:
 
@@ -75,20 +74,18 @@ class CharacterSelector:
     selected = self.selected_characters[team]
     available = [
       i for i in unselected if i != self.previous_selection[team]
-      and i not in selected and i not in self.excluded_characters[team]
-    ]
+      and i not in selected and i not in self.excluded_characters[team]]
 
     if not available:
       unselected = self.unselected_characters[team] = team_list
       selected = self.selected_characters[team] = []
       available = [
         i for i in unselected if i != self.previous_selection[team]
-        and i not in selected and i not in self.excluded_characters[team]
-      ]
+        and i not in selected and i not in self.excluded_characters[team]]
 
-    # if debug == True:
+    #if debug == True:
     #print("Available characters:", available)
-    print("Unselected characters:", unselected)
+    #print("Unselected characters:", unselected)
     #print("Selected characters:", selected)
     #print("Excluded characters:", self.excluded_characters[team])
     #input("")
